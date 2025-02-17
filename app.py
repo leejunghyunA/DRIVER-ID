@@ -5,34 +5,65 @@ import pandas as pd
 @st.cache_data
 def load_data():
     file_path = "인천ID.xlsx"  # 엑셀 파일이 있는 경로
-    df = pd.read_excel(file_path)
-    return df
+    xls = pd.ExcelFile(file_path)
+    id_list_df = pd.read_excel(xls, sheet_name="ID목록")
+    grade_df = pd.read_excel(xls, sheet_name="운전자별 등급현황")
+    return id_list_df, grade_df
 
-df = load_data()
+id_list_df, grade_df = load_data()
+
+# 최신 등급 데이터 추출 함수
+def get_latest_grade(driver_name, company):
+    driver_data = grade_df[(grade_df["운수사"] == company) & (grade_df["운전자이름"] == driver_name)]
+    if driver_data.empty:
+        return "등급 정보 없음"
+    
+    # 월별 등급 데이터 추출
+    grade_cols = [col for col in grade_df.columns if "월" in col]
+    latest_month = None
+    latest_grade = None
+    
+    for col in reversed(grade_cols):  # 최신 데이터부터 확인
+        grade = driver_data[col].values[0]
+        if pd.notna(grade):
+            latest_month = col
+            latest_grade = grade
+            break
+    
+    return f"최근 등급: {latest_month[:2]}년 {latest_month[2:]}월 {latest_grade}등급" if latest_month else "등급 정보 없음"
 
 # Streamlit UI 구성
-st.title("운전자 ID 조회 시스템")
-st.write("운수사와 운전자 이름을 입력하여 ID를 조회하세요.")
+st.title("운전자 ID 및 등급 조회 시스템")
+st.write("운수사와 운전자 이름을 입력하여 ID 및 최근 등급을 조회하세요.")
 
-# 운수사 선택
-company_list = df["운수사"].unique().tolist()
+# 운수사 선택 필터
+company_list = id_list_df["운수사"].unique().tolist()
 company = st.selectbox("운수사 선택", [""] + company_list)
 
-# 운전자 이름 입력
+# 운전자 이름 검색 필드
 if company:
-    driver_list = df[df["운수사"] == company]["운전자이름"].unique().tolist()
-    name = st.selectbox("운전자 이름 선택", [""] + driver_list)
+    driver_list = id_list_df[id_list_df["운수사"] == company]["운전자이름"].unique().tolist()
+    name = st.text_input("운전자 이름 입력")
 else:
     name = ""
 
-# ID 검색
+# ID 및 등급 조회
 if st.button("검색"):
     if company and name:
-        driver_id = df[(df["운수사"] == company) & (df["운전자이름"] == name)]["운전자ID"]
-        if not driver_id.empty:
-            st.success(f"운전자 ID: {driver_id.values[0]}")
+        driver_info = id_list_df[(id_list_df["운수사"] == company) & (id_list_df["운전자이름"] == name)]
+        
+        if not driver_info.empty:
+            driver_id = driver_info["운전자ID"].values[0]
+            retire_status = driver_info["퇴사여부"].values[0]
+            
+            if pd.notna(retire_status) and retire_status == "퇴사자":
+                driver_id = "0000 (퇴사자)"
+            
+            latest_grade = get_latest_grade(name, company)
+            
+            st.success(f"운전자 ID: {driver_id}")
+            st.info(latest_grade)
         else:
             st.error("검색 결과가 없습니다.")
     else:
-        st.warning("운수사와 운전자 이름을 선택해주세요.")
-
+        st.warning("운수사를 선택하고 운전자 이름을 입력해주세요.")

@@ -37,7 +37,7 @@ def get_grade_history(driver_name, company):
     for col in reversed(grade_cols):  # 최신 데이터부터 확인
         if col in driver_data and pd.notna(driver_data[col].values[0]):
             grade_value = driver_data[col].values[0]
-            grade_history.append({"년월": f"{col[:2]}년 {col[2:]}월", "등급": f"{grade_value}등급"})
+            grade_history.append({"년월": f"{col[:2]}년 {col[2:]}", "등급": f"{grade_value}등급"})
             if latest_month is None:
                 latest_month = col
                 latest_grade = grade_value
@@ -47,7 +47,7 @@ def get_grade_history(driver_name, company):
     
     grade_color = get_grade_color(latest_grade)
     grade_df_display = pd.DataFrame(grade_history)
-    return f"최근 등급: {latest_month[:2]}년 {latest_month[2:]}월 <b style='color:{grade_color};'>{latest_grade}등급</b>", grade_color, grade_df_display
+    return f"최근 등급: {latest_month[:2]}년 {latest_month[2:]} <b style='color:{grade_color};'>{latest_grade}등급</b>", grade_color, grade_df_display
 
 # Streamlit UI 구성
 st.title("운전자 ID 및 등급 조회 시스템")

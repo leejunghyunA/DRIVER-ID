@@ -34,14 +34,16 @@ def get_latest_grade(driver_name, company):
     latest_grade = None
     
     for col in reversed(grade_cols):  # 최신 데이터부터 확인
-        grade = driver_data[col].values[0]
-        if pd.notna(grade):
+        if col in driver_data and pd.notna(driver_data[col].values[0]):
             latest_month = col
-            latest_grade = grade
+            latest_grade = driver_data[col].values[0]
             break
-
+    
+    if latest_month is None or latest_grade is None:
+        return "등급 정보 없음", "gray"
+    
     grade_color = get_grade_color(latest_grade)
-    return f"최근 등급: {latest_month[:2]}년 {latest_month[2:]}월 <b style='color:{grade_color};'>{latest_grade}등급</b>", grade_color if latest_month else "등급 정보 없음", "gray"
+    return f"최근 등급: {latest_month[:2]}년 {latest_month[2:]} <b style='color:{grade_color};'>{latest_grade}등급</b>", grade_color
 
 # Streamlit UI 구성
 st.title("운전자 ID 및 등급 조회 시스템")

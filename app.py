@@ -12,11 +12,21 @@ def load_data():
 
 id_list_df, grade_df = load_data()
 
+# 등급별 색상 매핑
+def get_grade_color(grade):
+    if grade in ["S", "A"]:
+        return "green"
+    elif grade in ["B", "C"]:
+        return "blue"
+    elif grade in ["D", "F"]:
+        return "red"
+    return "gray"
+
 # 최신 등급 데이터 추출 함수
 def get_latest_grade(driver_name, company):
     driver_data = grade_df[(grade_df["운수사"] == company) & (grade_df["운전자이름"] == driver_name)]
     if driver_data.empty:
-        return "등급 정보 없음"
+        return "등급 정보 없음", "gray"
     
     # 월별 등급 데이터 추출
     grade_cols = [col for col in grade_df.columns if "월" in col]
@@ -29,8 +39,9 @@ def get_latest_grade(driver_name, company):
             latest_month = col
             latest_grade = grade
             break
-    
-    return f"최근 등급: {latest_month[:2]}년 {latest_month[2:]}월 {latest_grade}등급" if latest_month else "등급 정보 없음"
+
+    grade_color = get_grade_color(latest_grade)
+    return f"최근 등급: {latest_month[:2]}년 {latest_month[2:]}월 <b style='color:{grade_color};'>{latest_grade}등급</b>", grade_color if latest_month else "등급 정보 없음", "gray"
 
 # Streamlit UI 구성
 st.title("운전자 ID 및 등급 조회 시스템")
@@ -57,12 +68,12 @@ if st.button("검색"):
             retire_status = driver_info["퇴사여부"].values[0]
             
             if pd.notna(retire_status) and retire_status == "퇴사자":
-                driver_id = "0000 (퇴사자)"
+                driver_id = f"{driver_id} (퇴사자)"
             
-            latest_grade = get_latest_grade(name, company)
+            latest_grade, grade_color = get_latest_grade(name, company)
             
             st.success(f"운전자 ID: {driver_id}")
-            st.info(latest_grade)
+            st.markdown(f"<div style='font-size:18px;'> {latest_grade} </div>", unsafe_allow_html=True)
         else:
             st.error("검색 결과가 없습니다.")
     else:

@@ -22,28 +22,32 @@ def get_grade_color(grade):
         return "red"
     return "gray"
 
-# 최신 등급 데이터 추출 함수
-def get_latest_grade(driver_name, company):
+# 최신 등급 및 등급 히스토리 데이터 추출 함수
+def get_grade_history(driver_name, company):
     driver_data = grade_df[(grade_df["운수사"] == company) & (grade_df["운전자이름"] == driver_name)]
     if driver_data.empty:
-        return "등급 정보 없음", "gray"
+        return "등급 정보 없음", "gray", pd.DataFrame()
     
     # 월별 등급 데이터 추출
     grade_cols = [col for col in grade_df.columns if "월" in col]
+    grade_history = []
     latest_month = None
     latest_grade = None
     
     for col in reversed(grade_cols):  # 최신 데이터부터 확인
         if col in driver_data and pd.notna(driver_data[col].values[0]):
-            latest_month = col
-            latest_grade = driver_data[col].values[0]
-            break
+            grade_value = driver_data[col].values[0]
+            grade_history.append({"년월": f"{col[:2]}년 {col[2:]}월", "등급": f"{grade_value}등급"})
+            if latest_month is None:
+                latest_month = col
+                latest_grade = grade_value
     
     if latest_month is None or latest_grade is None:
-        return "등급 정보 없음", "gray"
+        return "등급 정보 없음", "gray", pd.DataFrame()
     
     grade_color = get_grade_color(latest_grade)
-    return f"최근 등급: {latest_month[:2]}년 {latest_month[2:]} <b style='color:{grade_color};'>{latest_grade}등급</b>", grade_color
+    grade_df_display = pd.DataFrame(grade_history)
+    return f"최근 등급: {latest_month[:2]}년 {latest_month[2:]}월 <b style='color:{grade_color};'>{latest_grade}등급</b>", grade_color, grade_df_display
 
 # Streamlit UI 구성
 st.title("운전자 ID 및 등급 조회 시스템")
@@ -72,10 +76,15 @@ if st.button("검색"):
             if pd.notna(retire_status) and retire_status == "퇴사자":
                 driver_id = f"{driver_id} (퇴사자)"
             
-            latest_grade, grade_color = get_latest_grade(name, company)
+            latest_grade, grade_color, grade_history_df = get_grade_history(name, company)
             
             st.success(f"운전자 ID: {driver_id}")
             st.markdown(f"<div style='font-size:18px;'> {latest_grade} </div>", unsafe_allow_html=True)
+            
+            # 등급 히스토리 표시
+            if not grade_history_df.empty:
+                st.write("등급 히스토리")
+                st.dataframe(grade_history_df, hide_index=True)
         else:
             st.error("검색 결과가 없습니다.")
     else:

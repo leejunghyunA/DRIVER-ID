@@ -10,6 +10,7 @@ def load_data():
     grade_df = pd.read_excel(xls, sheet_name="운전자별 등급현황")
     return id_list_df, grade_df
 
+
 id_list_df, grade_df = load_data()
 
 # 등급별 색상 매핑
@@ -29,15 +30,15 @@ def get_grade_history(driver_name, company):
         return "등급 정보 없음", "gray", pd.DataFrame()
     
     # 월별 등급 데이터 추출
-    grade_cols = [col for col in grade_df.columns if "월" in col]
+    grade_cols = [col for col in driver_data.columns if "월" in col]
     grade_history = []
     latest_month = None
     latest_grade = None
     
     for col in reversed(grade_cols):  # 최신 데이터부터 확인
-        if col in driver_data and pd.notna(driver_data[col].values[0]):
-            grade_value = driver_data[col].values[0]
-            grade_history.append({"년월": f"{col[:2]}년 {col[2:]}", "등급": f"{grade_value}등급"})
+        grade_value = driver_data[col].values[0] if col in driver_data else None
+        if pd.notna(grade_value):
+            grade_history.append({"년월": f"{col[:2]}년 {col[2:]}월", "등급": f"{grade_value}등급"})
             if latest_month is None:
                 latest_month = col
                 latest_grade = grade_value
@@ -47,7 +48,7 @@ def get_grade_history(driver_name, company):
     
     grade_color = get_grade_color(latest_grade)
     grade_df_display = pd.DataFrame(grade_history)
-    return f"최근 등급: {latest_month[:2]}년 {latest_month[2:]} <b style='color:{grade_color};'>{latest_grade}등급</b>", grade_color, grade_df_display
+    return f"최근 등급: {latest_month[:2]}년 {latest_month[2:]}월 <b style='color:{grade_color};'>{latest_grade}등급</b>", grade_color, grade_df_display
 
 # Streamlit UI 구성
 st.title("운전자 ID 및 등급 조회 시스템")
@@ -89,3 +90,4 @@ if st.button("검색"):
             st.error("검색 결과가 없습니다.")
     else:
         st.warning("운수사를 선택하고 운전자 이름을 입력해주세요.")
+

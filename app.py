@@ -30,14 +30,14 @@ def get_grade_history(driver_name, company):
         return "등급 정보 없음", "gray", pd.DataFrame()
     
     # 월별 등급 데이터 추출
-    grade_cols = [col for col in driver_data.columns if "월" in col]
+    grade_cols = [col for col in grade_df.columns if "월" in col]
     grade_history = []
     latest_month = None
     latest_grade = None
     
     for col in reversed(grade_cols):  # 최신 데이터부터 확인
-        grade_value = driver_data[col].values[0] if col in driver_data else None
-        if pd.notna(grade_value):
+        if col in driver_data.columns and pd.notna(driver_data[col].values[0]):
+            grade_value = driver_data[col].values[0]
             grade_history.append({"년월": f"{col[:2]}년 {col[2:]}월", "등급": f"{grade_value}등급"})
             if latest_month is None:
                 latest_month = col

@@ -86,7 +86,7 @@ if st.button("검색"):
             
             # 등급 히스토리 표시
             if not grade_history_df.empty:
-                st.write("등급 히스토리")
+                st.markdown("### <📝월별 등급 현황>")
                 st.dataframe(grade_history_df, hide_index=True)
         else:
             st.error("검색 결과가 없습니다.")

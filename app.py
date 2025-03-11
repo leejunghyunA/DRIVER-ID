@@ -71,8 +71,10 @@ if st.button("검색"):
         driver_info = id_list_df[(id_list_df["운수사"] == company) & (id_list_df["운전자이름"] == name)]
         
         if not driver_info.empty:
-            driver_id = driver_info["운전자ID"].values[0]
-            retire_status = driver_info["퇴사여부"].values[0]
+            # 실제 열 이름 확인 후 사용
+            column_name = "운전자ID" if "운전자ID" in id_list_df.columns else id_list_df.columns[2]
+            driver_id = driver_info[column_name].values[0]
+            retire_status = driver_info["퇴사여부"].values[0] if "퇴사여부" in id_list_df.columns else ""
             
             if pd.notna(retire_status) and retire_status == "퇴사자":
                 driver_id = f"{driver_id} (퇴사자)"
@@ -90,4 +92,5 @@ if st.button("검색"):
             st.error("검색 결과가 없습니다.")
     else:
         st.warning("운수사를 선택하고 운전자 이름을 입력해주세요.")
+
 
